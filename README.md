@@ -205,12 +205,16 @@ pestaña **Actions** del repositorio y en la insignia de arriba.
 - **Tipos**: `LocalDateTime` para fechas y `BigDecimal` para el precio (nunca `double`).
 - **Dependencias mínimas**: web, data-jpa, validation (anotaciones del contrato), H2, springdoc y, en
   test, RestAssured.
+- **Empate de prioridad**: el enunciado no lo contempla. La consulta solo ordena por prioridad, así que si
+    dos tarifas con la misma prioridad cubren la fecha el resultado no está determinado.
+- **Versión de Spring Boot**: 3.3.5 con Java 17. La línea 3.x ya no recibe correcciones gratuitas; la
+    evolución natural es migrar a Spring Boot 4.x.
 
 ## Discutido y no implementado
 
 | Idea | Por qué no |
 |---|---|
-| Caché de tarifas (local, distribuida, invalidación) | Se evaluó cachear la lista de tarifas de cada (marca, producto), dejando la fecha fuera de la clave y filtrando por fecha y prioridad en el dominio sobre esa lista |
+| Caché de tarifas (local, distribuida, invalidación) | Se evaluó cachear la lista de tarifas por (marca, producto). No hay datos de carga que lo justifiquen, la BD es H2 en memoria y añadiría riesgo de precios desfasados (correcciones urgentes, varias instancias) y de resultados vacíos cacheados. Además obligaba a traer todas las tarifas y filtrar en el dominio |
 | Spring Security (OAuth2 / JWT) | El enunciado no pide autenticación. Comentado arriba |
 | Otro motor de base de datos, migraciones (Flyway) y Testcontainers | H2 en memoria cumple el enunciado. El código está preparado para el cambio (ver *Preparado para cambiar de base de datos*) |
 | Enfoque DDD completo (value objects, agregado `ProductPricing`) | Más clases y mapeos de los que justifica el tamaño de la prueba. Sería la evolución natural: `ApplicationPeriod`, `Money`, `BrandId`, `ProductId`, y un agregado con el método `priceAt(fecha)` |
