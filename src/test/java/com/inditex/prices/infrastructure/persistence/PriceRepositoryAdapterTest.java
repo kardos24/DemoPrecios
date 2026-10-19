@@ -17,15 +17,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Prueba la consulta contra H2. La regla de selección (extremos inclusivos, prioridad y desempate)
+ * Prueba la consulta contra H2. La regla de selección (extremos inclusivos y prioridad)
  * vive en la consulta, así que se verifica con datos propios de la prueba, no con los de
  * {@code data.sql}. Cada test se ejecuta en una transacción que se deshace al terminar.
  *
- * <p>Fixture, el día 2030-01-01:
- * <ul>
- *   <li>producto 90001: tarifa 20 (prioridad 0, todo el día) y tarifa 21 (prioridad 1, de 10:00:00 a 12:00:00)</li>
- *   <li>producto 90002: tarifa 30 (prioridad 1, de 15:00 a 18:30) y tarifa 31 (prioridad 1, de 16:00 a 17:00)</li>
- * </ul>
+ * <p>Fixture, el día 2030-01-01, producto 90001: tarifa 20 (prioridad 0, todoo el día) y
+ * tarifa 21 (prioridad 1, de 10:00:00 a 12:00:00).
  */
 @DataJpaTest
 @Import(PriceRepositoryAdapter.class)
