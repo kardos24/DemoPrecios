@@ -135,11 +135,10 @@ Los errores se devuelven como `ProblemDetail` (RFC 7807). El contrato completo e
 | Tipo       | Clase                           | Qué valida                                                                   |
 |------------|---------------------------------|------------------------------------------------------------------------------|
 | Unitario   | `GetApplicablePriceServiceTest` | Caso de uso con el puerto de salida simulado: devuelve el precio o lanza `PriceNotFoundException` |
-| Unitario   | `PriceRepositoryAdapterTest`    | La consulta contra H2: mapeo, prioridad, desempate, fronteras de fechas, marca o producto inexistente y foreign key hacia `BRAND` |
+| Unitario   | `PriceRepositoryAdapterTest`    | La consulta contra H2: mapeo, prioridad, fronteras de fechas, marca o producto inexistente y foreign key hacia `BRAND` |
 | Unitario   | `PriceControllerTest`           | Capa web (`@WebMvcTest`): mapeo de la respuesta, 404 y 400                   |
 | End-to-end | `PriceApiE2ETest`               | Aplicación real + HTTP (RestAssured): los 5 casos del enunciado, 404 por producto o marca inexistente y 400 |
-| End-to-end | `PriceBoundaryE2ETest`          | Fronteras de los rangos de fechas por HTTP, con datos propios (ver abajo)    |
-
+| End-to-end | `PriceBoundaryE2ETest`          | Fronteras de los rangos de fechas por HTTP, con datos propios  |
 
 ## Arquitectura
 
@@ -180,7 +179,6 @@ Qué habría que tocar en cada caso:
 | Otro motor relacional (por ejemplo Oracle o MySQL) | Dependencia del driver, `spring.datasource.*` y los scripts SQL, que pueden necesitar ajustes según el motor (por ejemplo la columna autogenerada) | Dominio, aplicación, adaptador, entidades y consulta: es una consulta derivada de Spring Data, sin SQL nativo ni funciones propias de H2 |
 | Otra tecnología (JDBC, MongoDB, un servicio remoto) | Un nuevo adaptador que implemente `PriceRepositoryPort` | Dominio, aplicación y capa REST |
 
-
 ## Autenticación y autorización (no aplicada en esta prueba)
 
 El enunciado define un endpoint de consulta de solo lectura y no pide autenticación, por lo que **no se ha
@@ -202,21 +200,22 @@ pestaña **Actions** del repositorio y en la insignia de arriba.
   ordena por prioridad descendente y devuelve solo la primera fila. No se traen a memoria las tarifas que no
   aplican.
 - **Rangos inclusivos**: una tarifa aplica desde su `startDate` hasta su `endDate`, ambos incluidos.
-- **Empate de prioridad**: el enunciado no lo contempla. Se resuelve a favor de la tarifa que empezó más
-  tarde (la más cercana a la fecha consultada). Si también coincide la fecha de inicio, el resultado no está
-  determinado.
 - **404 para "no hay precio"**: es un recurso inexistente, no una petición mal formada. Se usa 400
   solo para parámetros ausentes o inválidos.
 - **Tipos**: `LocalDateTime` para fechas y `BigDecimal` para el precio (nunca `double`).
 - **Dependencias mínimas**: web, data-jpa, validation (anotaciones del contrato), H2, springdoc y, en
   test, RestAssured.
+- **Empate de prioridad**: el enunciado no lo contempla. La consulta solo ordena por prioridad, así que si
+    dos tarifas con la misma prioridad cubren la fecha el resultado no está determinado.
+- **Versión de Spring Boot**: 3.3.5 con Java 17. La línea 3.x ya no recibe correcciones gratuitas; la
+    evolución natural es migrar a Spring Boot 4.x.
 
 ## Discutido y no implementado
 
 | Idea | Por qué no |
 |---|---|
-| Caché de tarifas (local, distribuida, invalidación) | Ver la sección anterior |
-| Spring Security (OAuth2 / JWT) | El enunciado no pide autenticación. Está descrito arriba |
+| Caché de tarifas (local, distribuida, invalidación) | Se evaluó cachear la lista de tarifas por (marca, producto). No hay datos de carga que lo justifiquen, la BD es H2 en memoria y añadiría riesgo de precios desfasados (correcciones urgentes, varias instancias) y de resultados vacíos cacheados. Además obligaba a traer todas las tarifas y filtrar en el dominio |
+| Spring Security (OAuth2 / JWT) | El enunciado no pide autenticación. Comentado arriba |
 | Otro motor de base de datos, migraciones (Flyway) y Testcontainers | H2 en memoria cumple el enunciado. El código está preparado para el cambio (ver *Preparado para cambiar de base de datos*) |
 | Enfoque DDD completo (value objects, agregado `ProductPricing`) | Más clases y mapeos de los que justifica el tamaño de la prueba. Sería la evolución natural: `ApplicationPeriod`, `Money`, `BrandId`, `ProductId`, y un agregado con el método `priceAt(fecha)` |
 | Karate o Cucumber para los E2E | RestAssured ya cubre el criterio con código Java y sin lenguaje adicional. Cucumber tendría sentido si negocio debiera leer los escenarios |

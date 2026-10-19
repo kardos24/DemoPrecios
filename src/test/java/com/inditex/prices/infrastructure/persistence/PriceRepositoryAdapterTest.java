@@ -17,15 +17,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Prueba la consulta contra H2. La regla de selección (extremos inclusivos, prioridad y desempate)
+ * Prueba la consulta contra H2. La regla de selección (extremos inclusivos y prioridad)
  * vive en la consulta, así que se verifica con datos propios de la prueba, no con los de
  * {@code data.sql}. Cada test se ejecuta en una transacción que se deshace al terminar.
  *
- * <p>Fixture, el día 2030-01-01:
- * <ul>
- *   <li>producto 90001: tarifa 20 (prioridad 0, todo el día) y tarifa 21 (prioridad 1, de 10:00:00 a 12:00:00)</li>
- *   <li>producto 90002: tarifa 30 (prioridad 1, de 15:00 a 18:30) y tarifa 31 (prioridad 1, de 16:00 a 17:00)</li>
- * </ul>
+ * <p>Fixture, el día 2030-01-01, producto 90001: tarifa 20 (prioridad 0, todoo el día) y
+ * tarifa 21 (prioridad 1, de 10:00:00 a 12:00:00).
  */
 @DataJpaTest
 @Import(PriceRepositoryAdapter.class)
@@ -34,7 +31,6 @@ class PriceRepositoryAdapterTest {
     private static final long BRAND_ID = 1L;
     private static final long SEED_PRODUCT_ID = 35455L;
     private static final long PRIORITY_PRODUCT_ID = 90001L;
-    private static final long TIE_PRODUCT_ID = 90002L;
 
     @Autowired
     private PriceRepositoryAdapter adapter;
@@ -44,10 +40,8 @@ class PriceRepositoryAdapterTest {
 
     @BeforeEach
     void createFixture() {
-        insertTariff(PRIORITY_PRODUCT_ID, 20, "2030-01-01 00:00:00", "2030-01-01 23:59:59", 0);
-        insertTariff(PRIORITY_PRODUCT_ID, 21, "2030-01-01 10:00:00", "2030-01-01 12:00:00", 1);
-        insertTariff(TIE_PRODUCT_ID, 30, "2030-01-01 15:00:00", "2030-01-01 18:30:00", 1);
-        insertTariff(TIE_PRODUCT_ID, 31, "2030-01-01 16:00:00", "2030-01-01 17:00:00", 1);
+        insertTariff( 20, "2030-01-01 00:00:00", "2030-01-01 23:59:59", 0);
+        insertTariff( 21, "2030-01-01 10:00:00", "2030-01-01 12:00:00", 1);
     }
 
     @Test
@@ -113,12 +107,12 @@ class PriceRepositoryAdapterTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
-    private void insertTariff(long productId, int priceList, String start, String end, int priority) {
+    private void insertTariff(int priceList, String start, String end, int priority) {
         jdbcTemplate.update("""
                 INSERT INTO PRICES (BRAND_ID, START_DATE, END_DATE, PRICE_LIST, PRODUCT_ID, PRIORITY, PRICE, CURR)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'EUR')
                 """,
-                BRAND_ID, Timestamp.valueOf(start), Timestamp.valueOf(end), priceList, productId,
+                BRAND_ID, Timestamp.valueOf(start), Timestamp.valueOf(end), priceList, PRIORITY_PRODUCT_ID,
                 priority, BigDecimal.TEN);
     }
 }

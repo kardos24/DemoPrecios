@@ -11,8 +11,7 @@ public interface PriceRepositoryPort {
 
     /**
      * Devuelve la tarifa vigente en la fecha indicada. Los extremos del rango son inclusivos.
-     * Si varias tarifas están vigentes se devuelve la de mayor prioridad y, si empatan, la que
-     * empezó más tarde.
+     * Si varias tarifas están vigentes se devuelve la de mayor prioridad.
      *
      * @param applicationDate fecha y hora de aplicación
      * @param productId       identificador del producto
