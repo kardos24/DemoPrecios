@@ -7,6 +7,10 @@ import java.time.LocalDateTime;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Adaptador de entrada REST. Implementa la interfaz {@link PricesApi}, generada a partir del
+ * contrato OpenAPI, y delega en el caso de uso.
+ */
 @RestController
 public class PriceController implements PricesApi {
 

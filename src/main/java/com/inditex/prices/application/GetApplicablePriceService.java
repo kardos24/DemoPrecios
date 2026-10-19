@@ -7,6 +7,10 @@ import com.inditex.prices.domain.port.out.PriceRepositoryPort;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 
+/**
+ * Caso de uso: obtiene la tarifa aplicable a un producto de una cadena en una fecha.
+ * La selección entre tarifas solapadas (prioridad y desempate) la resuelve el puerto de salida.
+ */
 @Service
 public class GetApplicablePriceService implements GetApplicablePriceUseCase {
 

@@ -6,6 +6,10 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Adaptador de salida hacia la base de datos. La selección de la tarifa aplicable (vigencia,
+ * prioridad y desempate) se resuelve en la propia consulta, que devuelve una sola fila.
+ */
 @Repository
 public class PriceRepositoryAdapter implements PriceRepositoryPort {
 
@@ -18,7 +22,7 @@ public class PriceRepositoryAdapter implements PriceRepositoryPort {
     @Override
     public Optional<Price> findApplicablePrice(LocalDateTime applicationDate, Long productId, Long brandId) {
         return repository
-                .findFirstByBrandIdAndProductIdAndStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByPriorityDesc(
+                .findFirstByBrand_IdAndProductIdAndStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByPriorityDesc(
                         brandId, productId, applicationDate, applicationDate)
                 .map(PriceEntity::toDomain);
     }

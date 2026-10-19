@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.inditex.prices.infrastructure.rest.model.PriceResponse;
-import io.restassured.specification.RequestSpecification;
+import io.restassured.response.ValidatableResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -15,8 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 /**
- * Pruebas end-to-end: arrancan la aplicación real (con H2 y los datos del enunciado)
- * y la consultan por HTTP con RestAssured.
+ * Pruebas end-to-end con los datos de {@code data.sql} (los del enunciado): arrancan la aplicación
+ * real y la consultan por HTTP con RestAssured. Dependen del seed por definición: los 5 casos del
+ * enunciado están escritos contra esas cuatro tarifas.
+ *
+ * <p>Las pruebas de frontera, que no deben depender del seed, están en {@link PriceBoundaryE2ETest}.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class PriceApiE2ETest {
@@ -28,8 +31,13 @@ class PriceApiE2ETest {
     @LocalServerPort
     private int port;
 
-    private RequestSpecification request() {
-        return given().port(port).accept("application/json");
+    private ValidatableResponse query(String applicationDate, Long productId, Long brandId) {
+        return given().port(port).accept("application/json")
+                .queryParam("applicationDate", applicationDate)
+                .queryParam("productId", productId)
+                .queryParam("brandId", brandId)
+                .when().get(PATH)
+                .then();
     }
 
     @ParameterizedTest(name = "{0}")
@@ -42,12 +50,8 @@ class PriceApiE2ETest {
             """)
     void returnsTheApplicablePrice(String description, String applicationDate, int priceList,
                                    LocalDateTime startDate, LocalDateTime endDate, BigDecimal price) {
-        var response = request()
-                .queryParam("applicationDate", applicationDate)
-                .queryParam("productId", PRODUCT_ID)
-                .queryParam("brandId", BRAND_ID)
-                .when().get(PATH)
-                .then().statusCode(200)
+        var response = query(applicationDate, PRODUCT_ID, BRAND_ID)
+                .statusCode(200)
                 .extract().as(PriceResponse.class);
 
         assertThat(response.getProductId()).isEqualTo(PRODUCT_ID);
@@ -59,20 +63,21 @@ class PriceApiE2ETest {
         assertThat(response.getCurrency()).isEqualTo("EUR");
     }
 
-    @Test
-    void returns404WhenNoPriceIsApplicable() {
-        request()
-                .queryParam("applicationDate", "2019-01-01T10:00:00")
-                .queryParam("productId", PRODUCT_ID)
-                .queryParam("brandId", BRAND_ID)
-                .when().get(PATH)
-                .then().statusCode(404)
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(delimiter = '|', textBlock = """
+            Producto inexistente | 2020-06-14T10:00:00 | 99999 | 1
+            Marca inexistente    | 2020-06-14T10:00:00 | 35455 | 2
+            """)
+    void returns404ForAnUnknownProductOrBrand(String description, String applicationDate,
+                                              Long productId, Long brandId) {
+        query(applicationDate, productId, brandId)
+                .statusCode(404)
                 .body("title", equalTo("Price not found"));
     }
 
     @Test
     void returns400WhenAParameterIsMissing() {
-        request()
+        given().port(port).accept("application/json")
                 .queryParam("applicationDate", "2020-06-14T10:00:00")
                 .queryParam("productId", PRODUCT_ID)
                 .when().get(PATH)
@@ -81,11 +86,6 @@ class PriceApiE2ETest {
 
     @Test
     void returns400WhenTheDateIsInvalid() {
-        request()
-                .queryParam("applicationDate", "14/06/2020")
-                .queryParam("productId", PRODUCT_ID)
-                .queryParam("brandId", BRAND_ID)
-                .when().get(PATH)
-                .then().statusCode(400);
+        query("14/06/2020", PRODUCT_ID, BRAND_ID).statusCode(400);
     }
 }

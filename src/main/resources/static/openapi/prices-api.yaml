@@ -12,8 +12,9 @@ paths:
       summary: Obtiene el precio aplicable
       description: >
         Devuelve la tarifa y el precio final que aplican a un producto de una cadena
-        en la fecha indicada. Si varias tarifas coinciden en la fecha, se aplica la de
-        mayor prioridad.
+        en la fecha indicada. Los rangos de fechas de las tarifas son inclusivos. Si varias
+        tarifas coinciden en la fecha se aplica la de mayor prioridad y, si empatan, la que
+        empezó más tarde.
       parameters:
         - name: applicationDate
           in: query

@@ -8,12 +8,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
- * Traduce los errores a respuestas RFC 7807 (ProblemDetail).
- * Los parámetros ausentes o mal formados (400) los resuelve ResponseEntityExceptionHandler.
+ * Traduce los errores a respuestas RFC 7807 ({@link ProblemDetail}).
+ *
+ * <p>Los parámetros ausentes o con formato incorrecto (400) los resuelve
+ * {@link ResponseEntityExceptionHandler}; aquí solo se añade el error de negocio.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    /**
+     * Sin tarifa aplicable: 404.
+     */
     @ExceptionHandler(PriceNotFoundException.class)
     ProblemDetail handlePriceNotFound(PriceNotFoundException ex) {
         var problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
