@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: Prices API
+  description: Consulta del precio aplicable a un producto de una cadena en una fecha dada.
+  version: 1.0.0
+paths:
+  /api/prices:
+    get:
+      tags:
+        - prices
+      operationId: getApplicablePrice
+      summary: Obtiene el precio aplicable
+      description: >
+        Devuelve la tarifa y el precio final que aplican a un producto de una cadena
+        en la fecha indicada. Los rangos de fechas de las tarifas son inclusivos. Si varias
+        tarifas coinciden en la fecha se aplica la de mayor prioridad y, si empatan, la que
+        empezó más tarde.
+      parameters:
+        - name: applicationDate
+          in: query
+          required: true
+          description: Fecha y hora de aplicación (ISO-8601, sin zona horaria).
+          schema:
+            type: string
+            format: date-time
+          example: "2020-06-14T10:00:00"
+        - name: productId
+          in: query
+          required: true
+          description: Identificador del producto.
+          schema:
+            type: integer
+            format: int64
+          example: 35455
+        - name: brandId
+          in: query
+          required: true
+          description: Identificador de la cadena (1 = ZARA).
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        "200":
+          description: Precio aplicable encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceResponse"
+        "400":
+          description: Parámetros ausentes o con formato incorrecto.
+        "404":
+          description: No existe ningún precio aplicable para los criterios indicados.
+components:
+  schemas:
+    PriceResponse:
+      type: object
+      required:
+        - productId
+        - brandId
+        - priceList
+        - startDate
+        - endDate
+        - price
+        - currency
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 35455
+        brandId:
+          type: integer
+          format: int64
+          example: 1
+        priceList:
+          type: integer
+          format: int32
+          description: Tarifa que aplica.
+          example: 1
+        startDate:
+          type: string
+          format: date-time
+          description: Inicio del rango de aplicación de la tarifa.
+          example: "2020-06-14T00:00:00"
+        endDate:
+          type: string
+          format: date-time
+          description: Fin del rango de aplicación de la tarifa.
+          example: "2020-12-31T23:59:59"
+        price:
+          type: number
+          description: Precio final de venta.
+          example: 35.50
+        currency:
+          type: string
+          description: Código ISO de la moneda.
+          example: EUR

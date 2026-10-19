@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: prices
+  jpa:
+    open-in-view: false
+    hibernate:
+      # El esquema lo gestiona schema.sql, no Hibernate
+      ddl-auto: none
+
+springdoc:
+  swagger-ui:
+    url: /openapi/prices-api.yaml
